@@ -121,11 +121,9 @@
             }
         }
 
-        // Se expone al window para que los botones HTML lo encuentren
         window.startGame = async (mode) => {
             gameMode = mode;
             
-            // Lógica asíncrona reforzada para solicitar permisos del Giroscopio
             try {
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
@@ -135,7 +133,6 @@
                         console.warn("Permiso de giroscopio denegado.");
                     }
                 } else {
-                    // Para Android y navegadores que no requieren permiso explícito previo
                     window.addEventListener('deviceorientation', handleOrientation);
                 }
             } catch (error) {
@@ -206,7 +203,6 @@
                 if(keys['w']) targetY += 0.25; if(keys['s']) targetY -= 0.25;
                 if(keys['a']) targetX -= 0.25; if(keys['d']) targetX += 0.25;
                 
-                // Límites de pantalla para el jugador
                 targetX = THREE.MathUtils.clamp(targetX, -8, 8);
                 targetY = THREE.MathUtils.clamp(targetY, -1.5, 6.5);
                 
@@ -293,22 +289,23 @@
         window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-        // --- MOVIMIENTO CON CELULAR ---
+        // --- MOVIMIENTO MULTIDIRECCIONAL CON CELULAR (TODOS LOS LADOS) ---
         function handleOrientation(e) {
-            if (gameState === 'playing' && e.gamma !== null) {
-                // e.gamma capta la rotación izquierda/derecha al tener el celular de frente.
-                // Valores estándar: -90 (Izquierda total) a 90 (Derecha total).
-                
+            if (gameState === 'playing' && e.gamma !== null && e.beta !== null) {
                 let isLandscape = window.innerWidth > window.innerHeight;
-                // Ajuste dependiendo de si tienes el celular en vertical u horizontal
+                
+                // Movimiento horizontal (Izquierda / Derecha)
                 let tiltX = isLandscape ? e.beta : e.gamma; 
-                
-                // Dividimos el tilt entre 20 para que con 20 grados de inclinación 
-                // ya alcance la velocidad máxima en pantalla.
                 let xInput = tiltX / 20; 
-                
-                // Mapeamos el valor directamente a la posición X (izquierda/derecha)
                 targetX = THREE.MathUtils.clamp(xInput * 8, -8, 8);
+
+                // Movimiento vertical (Arriba / Abajo)
+                // Se toma ~45 grados como la inclinación neutral normal al sostener el celular
+                let tiltY = isLandscape ? -e.gamma : e.beta; 
+                let yInput = (tiltY - 45) / 20; 
+                
+                // Inclinar hacia arriba/atrás sube el personaje; inclinar hacia adelante lo baja
+                targetY = THREE.MathUtils.clamp(2.5 - (yInput * 4), -1.5, 6.5);
             }
         }
 
