@@ -26,10 +26,11 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
-           - name: Sync Capacitor
-        run: |
-          chmod +x node_modules/.bin/*
-          npx cap sync android
+      - name: Fix permissions
+        run: chmod +x node_modules/.bin/*
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
